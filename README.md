@@ -1,0 +1,2 @@
+# rocket_cp_calculator
+ロケットの空力中心を計算します
