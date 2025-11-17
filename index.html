@@ -242,6 +242,7 @@
     </form>
   </div>
 
+  <script src="cpCalculator.js"></script>
   <script>
     (function () {
       const form      = document.getElementById('cpForm');
@@ -285,46 +286,36 @@
           return;
         }
 
-        const R  = d / 2;      // 胴体半径
-        const XR = dX;         // = Xt - Xf （Barrowman の X_R）
-
-        // --- ノーズコーン（円錐） ---
-        const CNa_n = 2.0;              // (C_Nα)_N
-        const Xn    = (2.0 / 3.0) * L;  // X_N = 2/3 L
-
-        // --- フィン幾何（中央コード線長 Lf） ---
-        // mid-chord の x 方向オフセット: Δx_mc = XR + (Ct - Cr)/2
-        const deltaXmc = XR + (Lfc - Lfr) / 2.0;
-        const Lf = Math.sqrt(S * S + deltaXmc * deltaXmc);
-
-        // --- フィンの (C_Nα)_F（胴体干渉なし） ---
-        const lambda = 2.0 * Lf / (Lfr + Lfc);
-        const denom  = 1.0 + Math.sqrt(1.0 + lambda * lambda);
-        const CNa_f  = (4.0 * n * Math.pow(S / d, 2)) / denom;  // (C_Nα)_F
-
-        // --- フィン干渉係数 ---
-        let Kfb;
-        if (n === 3 || n === 4) {
-          Kfb = 1.0 + R / (S + R);
-        } else if (n === 6) {
-          Kfb = 1.0 + 0.5 * R / (S + R);
-        } else {
-          Kfb = 1.0;
-          warnDiv.textContent =
-            '注意: バローマン法は通常 3, 4, 6 枚フィンを想定しています。n ≠ 3,4,6 の場合は近似として扱ってください。';
+        let cpResult;
+        try {
+          cpResult = CpCalculator.calculateCp({ L, d, n, Xf, dX, Lfr, Lfc, S });
+        } catch (err) {
+          resultDiv.innerHTML = `<span style="color:#c00;">${err.message}</span>`;
+          resultDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          resultDiv.classList.add('highlight');
+          setTimeout(() => resultDiv.classList.remove('highlight'), 1500);
+          return;
         }
-        const CNa_fb = CNa_f * Kfb; // 胴体干渉込みフィン (C_Nα)_{F,b}
 
-        // --- フィンのCp位置（X_Fcp, Barrowman 一般式）---
-        const Xf_cp =
-          Xf
-          + (XR / 3.0) * (Lfr + 2.0 * Lfc) / (Lfr + Lfc)
-          + (1.0 / 6.0) * ((Lfr + Lfc) - (Lfr * Lfc) / (Lfr + Lfc));
+        const {
+          Xcp,
+          calibers,
+          CNa_n,
+          CNa_fb,
+          Xn,
+          XR,
+          deltaXmc,
+          Lf,
+          lambda,
+          CNa_f,
+          Kfb,
+          Xf_cp,
+          warn,
+        } = cpResult;
 
-        // --- 全体 Cp ---
-        const CNa_total = CNa_n + CNa_fb;
-        const Xcp = (CNa_n * Xn + CNa_fb * Xf_cp) / CNa_total;
-        const calibers = Xcp / d;
+        if (warn) {
+          warnDiv.textContent = warn;
+        }
 
         // 結果表示
         resultDiv.innerHTML =
