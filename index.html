@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>モデルロケット空力中心(Cp)計算</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f5f5f5;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .note {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 20px;
+    }
+    .layout {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+      gap: 24px;
+      align-items: flex-start;
+    }
+    figure {
+      margin: 0;
+      padding: 16px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+      text-align: center;
+    }
+    figure img {
+      max-width: 100%;
+      height: auto;
+    }
+    figure figcaption {
+      margin-top: 8px;
+      font-size: 0.85rem;
+      color: #666;
+    }
+    .formula {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px dashed #ddd;
+      text-align: left;
+      font-size: 0.85rem;
+      color: #333;
+    }
+    .formula code {
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.8rem;
+    }
+    form {
+      background: #fff;
+      padding: 16px 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+    }
+    .field {
+      margin-bottom: 10px;
+    }
+    .field label {
+      display: block;
+      font-size: 0.9rem;
+      margin-bottom: 3px;
+    }
+    .field small {
+      display: block;
+      font-size: 0.75rem;
+      color: #777;
+    }
+    .field input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 6px 8px;
+      font-size: 0.95rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    .buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    button {
+      flex: 1;
+      padding: 8px 10px;
+      font-size: 0.95rem;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+    }
+    #calcBtn {
+      background: #0078d7;
+      color: #fff;
+    }
+    #resetBtn {
+      background: #e0e0e0;
+      color: #333;
+    }
+    #result, #details {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px dashed #ddd;
+      font-size: 0.9rem;
+    }
+    #result strong {
+      font-size: 1.05rem;
+    }
+    .warn {
+      margin-top: 8px;
+      color: #c65c00;
+      font-size: 0.8rem;
+    }
+
+    /* ★ 計算結果を一瞬ハイライトするためのスタイル */
+    #result.highlight {
+      background: #fff7c2;
+      transition: background 1.2s ease;
+    }
+
+    @media (max-width: 800px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>モデルロケット空力中心 (Cp) 計算</h1>
+  <p class="note">
+    ※ バローマン法（亜音速・小迎角）の簡略式。単位はすべて同じ（mm, cm, m など）で入力してください。
+  </p>
+
+  <div class="layout">
+    <!-- 図面表示＋理論式 -->
+    <figure>
+      <!-- プロジェクトでは image/rocket.png を配置してください -->
+      <img src="image/rocket.png" alt="モデルロケット寸法図">
+      <figcaption>
+        ノーズコーン高さ L、外径 d、フィン位置 Xf、フィン寸法 Lfr / Lfc / S
+      </figcaption>
+
+      <div class="formula">
+        <strong>使用している理論式（Barrowman 法）</strong><br><br>
+        <u>ノーズ</u><br>
+        X<sub>N</sub> = (2/3) &times; L<br>
+        (C<sub>Nα</sub>)<sub>N</sub> = 2<br><br>
+
+        <u>フィン幾何</u><br>
+        X<sub>R</sub> = X<sub>t</sub> − X<sub>f</sub> = ΔX<br>
+        Δx<sub>mc</sub> = X<sub>R</sub> + (L<sub>fc</sub> − L<sub>fr</sub>)/2<br>
+        L<sub>f</sub> = √( S² + Δx<sub>mc</sub>² )<br><br>
+
+        <u>フィンの法線力係数</u><br>
+        λ = 2 L<sub>f</sub> / (L<sub>fr</sub> + L<sub>fc</sub>)<br>
+        (C<sub>Nα</sub>)<sub>F</sub> =
+        [ 4 n (S/d)² ] / ( 1 + √(1 + λ²) )<br>
+        n = 3,4 : K<sub>fb</sub> = 1 + R / (S + R)<br>
+        n = 6 : K<sub>fb</sub> = 1 + 0.5 &times; R / (S + R)<br>
+        (C<sub>Nα</sub>)<sub>F,b</sub> = K<sub>fb</sub>(C<sub>Nα</sub>)<sub>F</sub><br><br>
+
+        <u>フィンの空力中心位置</u><br>
+        X<sub>Fcp</sub> = X<sub>f</sub><br>
+        &nbsp;&nbsp;+ (X<sub>R</sub>/3) · (L<sub>fr</sub> + 2L<sub>fc</sub>)/(L<sub>fr</sub> + L<sub>fc</sub>)<br>
+        &nbsp;&nbsp;+ (1/6) · [ (L<sub>fr</sub> + L<sub>fc</sub>) − (L<sub>fr</sub>L<sub>fc</sub>)/(L<sub>fr</sub> + L<sub>fc</sub>) ]<br><br>
+
+        <u>ロケット全体の空力中心</u><br>
+        X<sub>cp</sub> =
+        { (C<sub>Nα</sub>)<sub>N</sub> X<sub>N</sub> +
+          (C<sub>Nα</sub>)<sub>F,b</sub> X<sub>Fcp</sub> } /
+        { (C<sub>Nα</sub>)<sub>N</sub> + (C<sub>Nα</sub>)<sub>F,b</sub> }<br>
+      </div>
+    </figure>
+
+    <!-- 入力フォーム -->
+    <form id="cpForm">
+      <div class="field">
+        <label for="L">ノーズコーン高さ L</label>
+        <input id="L" name="L" type="number" step="any" min="0" placeholder="例: 0.20">
+        <small>ノーズ先端から胴体との境目までの長さ</small>
+      </div>
+
+      <div class="field">
+        <label for="d">ロケット外径 d</label>
+        <input id="d" name="d" type="number" step="any" min="0" placeholder="例: 0.040">
+        <small>胴体チューブの直径</small>
+      </div>
+
+      <div class="field">
+        <label for="n">フィン枚数 n</label>
+        <input id="n" name="n" type="number" step="1" min="1" placeholder="例: 3">
+        <small>通常は 3 枚または 4 枚（バローマン式は 3/4/6 枚を想定）</small>
+      </div>
+
+      <div class="field">
+        <label for="Xf">フィン前縁ルート位置 Xf</label>
+        <input id="Xf" name="Xf" type="number" step="any" min="0" placeholder="例: 0.35">
+        <small>ノーズ先端からフィン根本の前縁までの距離</small>
+      </div>
+
+      <div class="field">
+        <label for="dX">フィン先端前縁の後退量 ΔX = Xt − Xf</label>
+        <input id="dX" name="dX" type="number" step="any" min="0" placeholder="例: 0.02">
+        <small>フィン先端前縁が根本前縁よりどれだけ後方にあるか（0 なら前縁が一直線）</small>
+      </div>
+
+      <div class="field">
+        <label for="Lfr">フィン根本コード長 Lfr</label>
+        <input id="Lfr" name="Lfr" type="number" step="any" min="0" placeholder="例: 0.10">
+        <small>胴体に接する長い辺の長さ</small>
+      </div>
+
+      <div class="field">
+        <label for="Lfc">フィン先端コード長 Lfc</label>
+        <input id="Lfc" name="Lfc" type="number" step="any" min="0" placeholder="例: 0.06">
+        <small>外側の短い辺の長さ</small>
+      </div>
+
+      <div class="field">
+        <label for="S">フィン幅（スパン） S</label>
+        <input id="S" name="S" type="number" step="any" min="0" placeholder="例: 0.060">
+        <small>胴体表面からフィン先端までの距離</small>
+      </div>
+
+      <div class="buttons">
+        <button id="calcBtn" type="submit">Cp を計算</button>
+        <button id="resetBtn" type="button">リセット</button>
+      </div>
+
+      <div id="result"></div>
+      <div id="details"></div>
+      <div id="warning" class="warn"></div>
+    </form>
+  </div>
+
+  <script>
+    (function () {
+      const form      = document.getElementById('cpForm');
+      const resultDiv = document.getElementById('result');
+      const detailsDiv= document.getElementById('details');
+      const warnDiv   = document.getElementById('warning');
+
+      document.getElementById('resetBtn').addEventListener('click', () => {
+        form.reset();
+        resultDiv.textContent  = '';
+        detailsDiv.textContent = '';
+        warnDiv.textContent    = '';
+        resultDiv.classList.remove('highlight');
+      });
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        warnDiv.textContent   = '';
+        detailsDiv.textContent= '';
+        resultDiv.classList.remove('highlight');
+
+        const L   = parseFloat(form.L.value);
+        const d   = parseFloat(form.d.value);
+        const n   = parseInt(form.n.value, 10);
+        const Xf  = parseFloat(form.Xf.value);
+        const dX  = parseFloat(form.dX.value); // = Xt - Xf
+        const Lfr = parseFloat(form.Lfr.value);
+        const Lfc = parseFloat(form.Lfc.value);
+        const S   = parseFloat(form.S.value);
+
+        // 入力チェック：L,d,n,Xf,Lfr,Lfc,S は >0, ΔX は >=0
+        if ([L, d, n, Xf, Lfr, Lfc, S].some(v => !isFinite(v) || v <= 0) ||
+            !isFinite(dX) || dX < 0) {
+          resultDiv.innerHTML =
+            '<span style="color:#c00;">すべての値を正の数（ΔX は 0 以上）で入力してください。</span>';
+          detailsDiv.textContent = '';
+          // エラー時もスクロールして知らせる
+          resultDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          resultDiv.classList.add('highlight');
+          setTimeout(() => resultDiv.classList.remove('highlight'), 1500);
+          return;
+        }
+
+        const R  = d / 2;      // 胴体半径
+        const XR = dX;         // = Xt - Xf （Barrowman の X_R）
+
+        // --- ノーズコーン（円錐） ---
+        const CNa_n = 2.0;              // (C_Nα)_N
+        const Xn    = (2.0 / 3.0) * L;  // X_N = 2/3 L
+
+        // --- フィン幾何（中央コード線長 Lf） ---
+        // mid-chord の x 方向オフセット: Δx_mc = XR + (Ct - Cr)/2
+        const deltaXmc = XR + (Lfc - Lfr) / 2.0;
+        const Lf = Math.sqrt(S * S + deltaXmc * deltaXmc);
+
+        // --- フィンの (C_Nα)_F（胴体干渉なし） ---
+        const lambda = 2.0 * Lf / (Lfr + Lfc);
+        const denom  = 1.0 + Math.sqrt(1.0 + lambda * lambda);
+        const CNa_f  = (4.0 * n * Math.pow(S / d, 2)) / denom;  // (C_Nα)_F
+
+        // --- フィン干渉係数 ---
+        let Kfb;
+        if (n === 3 || n === 4) {
+          Kfb = 1.0 + R / (S + R);
+        } else if (n === 6) {
+          Kfb = 1.0 + 0.5 * R / (S + R);
+        } else {
+          Kfb = 1.0;
+          warnDiv.textContent =
+            '注意: バローマン法は通常 3, 4, 6 枚フィンを想定しています。n ≠ 3,4,6 の場合は近似として扱ってください。';
+        }
+        const CNa_fb = CNa_f * Kfb; // 胴体干渉込みフィン (C_Nα)_{F,b}
+
+        // --- フィンのCp位置（X_Fcp, Barrowman 一般式）---
+        const Xf_cp =
+          Xf
+          + (XR / 3.0) * (Lfr + 2.0 * Lfc) / (Lfr + Lfc)
+          + (1.0 / 6.0) * ((Lfr + Lfc) - (Lfr * Lfc) / (Lfr + Lfc));
+
+        // --- 全体 Cp ---
+        const CNa_total = CNa_n + CNa_fb;
+        const Xcp = (CNa_n * Xn + CNa_fb * Xf_cp) / CNa_total;
+        const calibers = Xcp / d;
+
+        // 結果表示
+        resultDiv.innerHTML =
+          '<strong>結果</strong><br>' +
+          '空力中心 Cp 位置 Xcp = <strong>' + Xcp.toFixed(4) +
+          '</strong> (入力と同じ単位)<br>' +
+          'ノーズ先端基準の口径表示 Xcp/d = <strong>' +
+          calibers.toFixed(3) + '</strong> 口径<br><br>' +
+          'ノーズの (C<sub>Nα</sub>)<sub>N</sub> = ' + CNa_n.toFixed(3) +
+          ', フィンの (C<sub>Nα</sub>)<sub>F,b</sub> = ' + CNa_fb.toFixed(3);
+
+        // 中間計算（数値のみ）
+        detailsDiv.innerHTML =
+          '<strong>この入力値での中間計算結果</strong><br>' +
+          'X<sub>N</sub> = ' + Xn.toFixed(4) + '<br>' +
+          'X<sub>R</sub> = ' + XR.toFixed(4) + '<br>' +
+          'Δx<sub>mc</sub> = ' + deltaXmc.toFixed(4) + '<br>' +
+          'L<sub>f</sub> = ' + Lf.toFixed(4) + '<br>' +
+          'λ = ' + lambda.toFixed(4) + '<br>' +
+          '(C<sub>Nα</sub>)<sub>F</sub>（干渉なし） = ' + CNa_f.toFixed(4) + '<br>' +
+          'K<sub>fb</sub> = ' + Kfb.toFixed(4) + '<br>' +
+          '(C<sub>Nα</sub>)<sub>F,b</sub>（干渉込み） = ' + CNa_fb.toFixed(4) + '<br>' +
+          'X<sub>Fcp</sub> = ' + Xf_cp.toFixed(4);
+
+        // ★ 計算が終わったら結果部分までスクロール＆ハイライト
+        resultDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        resultDiv.classList.add('highlight');
+        setTimeout(() => resultDiv.classList.remove('highlight'), 1500);
+      });
+    })();
+  </script>
+</body>
+</html>
