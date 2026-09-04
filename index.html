@@ -43,6 +43,27 @@
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
       background: #fff;
     }
+    /* 姉妹サイトへのリンク */
+    .sisters {
+      max-width: 1100px;
+      margin: 0 auto 20px;
+    }
+    .sister {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+      padding: 10px 14px;
+      text-decoration: none;
+      color: #333;
+      border-left: 4px solid #0078d7;
+    }
+    .sister:hover { background: #f0f7fd; }
+    .sister-ico { font-size: 1.6rem; }
+    .sister strong { display: block; font-size: 0.95rem; color: #0078d7; }
+    .sister small  { display: block; font-size: 0.8rem; color: #666; }
     .layout {
       max-width: 1100px;
       margin: 0 auto;
@@ -164,6 +185,16 @@
   <p class="note">
     ※ バローマン法（亜音速・小迎角）の簡略式。単位はすべて同じ（mm, cm, m など）で入力してください。
   </p>
+
+  <div class="sisters">
+    <a class="sister" href="https://tarosay.github.io/parachute-calc/">
+      <span class="sister-ico">🪂</span>
+      <span>
+        <strong>缶サット用パラシュート設計</strong>
+        <small>落下速度から、傘の大きさと中央の穴の大きさを決める</small>
+      </span>
+    </a>
+  </div>
 
   <div class="layout">
     <!-- 図面表示＋理論式 -->

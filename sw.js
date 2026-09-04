@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rocket-cp-calculator-v1';
+const CACHE_NAME = 'rocket-cp-calculator-v2';
 const ASSETS = [
   './',
   './index.html',
